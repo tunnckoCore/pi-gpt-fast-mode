@@ -75,9 +75,9 @@ Toggle it off the same way:
 
 ## Keybinding setting
 
-The default shortcut is `ctrl+m`.
+The default shortcut is `ctrl+alt+m`, which avoids Pi's built-in defaults.
 
-To change it, add this field to Pi's global keybindings file:
+To use `ctrl+m` instead, add this field to Pi's global keybindings file:
 
 ```json
 {

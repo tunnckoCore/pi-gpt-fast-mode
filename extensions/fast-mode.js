@@ -9,7 +9,7 @@ const TARGET_MODEL = "gpt-5.5";
 const FAST_SERVICE_TIER = "priority";
 const STATUS_ID = "gpt-fastmode";
 const KEYBINDING_FIELD = "pi-gpt-fastmode";
-const DEFAULT_SHORTCUT = "ctrl+m";
+const DEFAULT_SHORTCUT = "ctrl+alt+m";
 
 /**
  * @typedef {{ provider?: string; id?: string }} PiModel
@@ -102,7 +102,7 @@ export function normalizeShortcutSetting(value) {
 
 /**
  * Read shortcuts from the global Pi keybindings JSON.
- * Uses the field `pi-gpt-fastmode`. Missing or invalid config falls back to ctrl+m.
+ * Uses the field `pi-gpt-fastmode`. Missing or invalid config falls back to ctrl+alt+m.
  * Set the field to false or null to disable the shortcut entirely.
  *
  * @param {ShortcutLoadOptions} [options]
