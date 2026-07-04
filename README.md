@@ -67,12 +67,6 @@ Inside Pi:
 /fast
 ```
 
-You will see a status item when it is on:
-
-```text
-fast: on
-```
-
 Toggle it off the same way:
 
 ```text

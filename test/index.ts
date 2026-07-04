@@ -40,18 +40,13 @@ function createMockPi() {
 
 function createCtx(model = { provider: TARGET_PROVIDER, id: TARGET_MODEL }) {
   const notifications: Array<{ message: string; level: string }> = [];
-  const statuses: Array<{ id: string; value?: string }> = [];
 
   return {
     model,
     notifications,
-    statuses,
     ui: {
       notify(message: string, level = "info") {
         notifications.push({ message, level });
-      },
-      setStatus(id: string, value?: string) {
-        statuses.push({ id, value });
       },
     },
   };
@@ -139,7 +134,6 @@ test("loads configured shortcuts and toggles payload patching", async () => {
     expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeUndefined();
 
     await pi.commands.get("fast")!.handler("", ctx);
-    expect(ctx.statuses.at(-1)?.value).toBe("fast: on");
     expect(ctx.notifications.at(-1)?.message).toMatch(/enabled/);
     expect(payloadHook({ payload: { model: TARGET_MODEL, store: false } }, ctx)).toEqual({
       model: TARGET_MODEL,
@@ -148,7 +142,6 @@ test("loads configured shortcuts and toggles payload patching", async () => {
     });
 
     await pi.commands.get("fast")!.handler("", ctx);
-    expect(ctx.statuses.at(-1)?.value).toBeUndefined();
     expect(ctx.notifications.at(-1)?.message).toMatch(/disabled/);
     expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeUndefined();
 

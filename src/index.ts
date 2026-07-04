@@ -9,8 +9,6 @@ export const FAST_SERVICE_TIER = "priority";
 export const KEYBINDING_FIELD = "pi-gpt-fastmode";
 export const DEFAULT_SHORTCUT = "ctrl+alt+m";
 
-const STATUS_ID = "gpt-fastmode";
-
 type PiModel = { provider?: string; id?: string };
 type ProviderPayload = Record<string, unknown>;
 type KeybindingsConfig = Record<string, unknown>;
@@ -115,18 +113,9 @@ function isTargetModelContext(ctx: unknown): boolean {
   return model?.provider === TARGET_PROVIDER && model?.id === TARGET_MODEL;
 }
 
-function setStatus(ctx: unknown, value: string | undefined): void {
-  const ui = (ctx as { ui?: { setStatus?: (id: string, value?: string) => void } } | undefined)?.ui;
-  ui?.setStatus?.(STATUS_ID, value);
-}
-
 function notify(ctx: unknown, message: string, level: "info" | "warning" | "error" = "info"): void {
   const ui = (ctx as { ui?: { notify?: (message: string, level?: string) => void } } | undefined)?.ui;
   ui?.notify?.(message, level);
-}
-
-function syncStatus(ctx: unknown, enabled: boolean): void {
-  setStatus(ctx, enabled ? "fast: on" : undefined);
 }
 
 function announceState(ctx: unknown, enabled: boolean): void {
@@ -152,7 +141,6 @@ export default function fastModeExtension(pi: ExtensionAPI): void {
 
   async function toggle(ctx: unknown): Promise<void> {
     enabled = !enabled;
-    syncStatus(ctx, enabled);
     announceState(ctx, enabled);
   }
 
@@ -172,13 +160,8 @@ export default function fastModeExtension(pi: ExtensionAPI): void {
     });
   }
 
-  pi.on("session_start", (_event, ctx) => {
+  pi.on("session_start", () => {
     enabled = false;
-    syncStatus(ctx, enabled);
-  });
-
-  pi.on("model_select", (_event, ctx) => {
-    syncStatus(ctx, enabled);
   });
 
   pi.on("before_provider_request", (event, ctx) => {
