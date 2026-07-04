@@ -115,10 +115,10 @@ The request is the part that matters.
 ## Smoke test
 
 ```bash
-npm test
+bun test
 ```
 
-The tests mock the Pi extension API and check the only things worth checking here:
+The smoke test mocks the Pi extension API and checks the only things worth checking here:
 
 - default is off
 - `/fast` turns it on

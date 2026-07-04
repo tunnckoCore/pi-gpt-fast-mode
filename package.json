@@ -3,7 +3,13 @@
   "version": "0.1.0",
   "description": "Pi extension that toggles GPT-5.5 Codex Fast mode with /fast.",
   "type": "module",
+  "module": "index.ts",
   "license": "MIT",
+  "packageManager": "bun@1.3.14",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tunnckoCore/pi-gpt-fastmode.git"
+  },
   "keywords": [
     "pi-package",
     "pi-extension",
@@ -13,17 +19,23 @@
   ],
   "pi": {
     "extensions": [
-      "./extensions"
+      "./index.ts"
     ]
   },
   "scripts": {
-    "test": "node tests/smoke.mjs"
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
   },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.80.3",
+    "@types/bun": "latest",
+    "typescript": "^5.9.3"
+  },
   "files": [
-    "extensions",
+    "index.ts",
     "README.md",
     "LICENSE"
   ]
