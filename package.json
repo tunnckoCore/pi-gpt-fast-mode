@@ -1,0 +1,30 @@
+{
+  "name": "pi-gpt-fastmode",
+  "version": "0.1.0",
+  "description": "Pi extension that toggles GPT-5.5 Codex Fast mode with /fast.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "gpt-5.5",
+    "codex",
+    "fast-mode"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ]
+  },
+  "scripts": {
+    "test": "node tests/smoke.mjs"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "files": [
+    "extensions",
+    "README.md",
+    "LICENSE"
+  ]
+}
