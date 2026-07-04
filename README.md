@@ -115,7 +115,7 @@ The request is the part that matters.
 ## Smoke test
 
 ```bash
-bun test
+bun run test
 ```
 
 The smoke test mocks the Pi extension API and checks the only things worth checking here:

@@ -13,7 +13,7 @@ import fastModeExtension, {
   resolveKeybindingsPath,
   shouldApplyFastMode,
   withFastServiceTier,
-} from "../index.ts";
+} from "../src/index.ts";
 
 type MockCtx = ReturnType<typeof createCtx>;
 
