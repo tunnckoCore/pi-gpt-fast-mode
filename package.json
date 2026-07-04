@@ -1,11 +1,10 @@
 {
-  "name": "pi-gpt-fastmode",
+  "name": "@tunnckocore/pi-gpt-fast-mode",
   "version": "0.1.0",
-  "description": "Pi extension that toggles GPT-5.5 Codex Fast mode with /fast.",
+  "description": "A super basic Pi extension that toggles GPT-5.5 Codex Fast mode with /fast (the default 'priority'), nothing else - one file, 180 lines of code.",
   "type": "module",
   "module": "src/index.ts",
   "license": "MIT",
-  "packageManager": "bun@1.3.14",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/tunnckoCore/pi-gpt-fastmode.git"
@@ -22,6 +21,9 @@
       "./src/index.ts"
     ]
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "bun test ./test/index.ts",
     "typecheck": "tsc --noEmit"
@@ -32,11 +34,9 @@
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "^0.80.3",
     "@types/bun": "latest",
-    "typescript": "^5.9.3"
+    "typescript": "^6"
   },
   "files": [
-    "src",
-    "README.md",
-    "LICENSE"
+    "src"
   ]
 }
