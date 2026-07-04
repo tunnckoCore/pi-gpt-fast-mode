@@ -112,13 +112,13 @@ So yes: it asks Codex for the Fast service tier. But Pi's own pricing display ma
 
 The request is the part that matters.
 
-## Smoke test
+## Test
 
 ```bash
 bun run test
 ```
 
-The smoke test mocks the Pi extension API and checks the only things worth checking here:
+The test mocks the Pi extension API and checks the only things worth checking here:
 
 - default is off
 - `/fast` turns it on

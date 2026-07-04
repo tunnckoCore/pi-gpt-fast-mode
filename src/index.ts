@@ -25,7 +25,7 @@ type ShortcutLoadOptions = {
 
 /**
  * True when this request is the GPT-5.5 Codex request this extension knows how to speed up.
- * The payload check makes smoke tests and future provider edge-cases less dependent on ctx.model.
+ * The payload check makes tests and future provider edge-cases less dependent on ctx.model.
  */
 export function shouldApplyFastMode(model: PiModel | undefined, payload: unknown): boolean {
   if (!payload || typeof payload !== "object") return false;
