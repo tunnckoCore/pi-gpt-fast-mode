@@ -38,19 +38,19 @@ Other models are left alone. No weird surprise bill multiplier on a random provi
 From GitHub:
 
 ```bash
-pi install git:github.com/tunnckoCore/pi-gpt-fastmode
+pi install git:github.com/tunnckoCore/pi-gpt-fast-mode
 ```
 
 Try it without installing:
 
 ```bash
-pi --no-extensions -e git:github.com/tunnckoCore/pi-gpt-fastmode
+pi --no-extensions -e git:github.com/tunnckoCore/pi-gpt-fast-mode
 ```
 
 Or from a local checkout:
 
 ```bash
-pi -e ./pi-gpt-fastmode
+pi -e ./pi-gpt-fast-mode
 ```
 
 or npm
@@ -77,23 +77,31 @@ Toggle it off the same way:
 
 The default shortcut is `ctrl+alt+m`, which avoids Pi's built-in defaults.
 
-To use `ctrl+m` instead, add this field to Pi's global keybindings file:
+To change it, add this field to Pi's global keybindings file. The value should be an array:
 
 ```json
 {
-  "pi-gpt-fastmode": "ctrl+m"
+  "pi-gpt-fast-mode": ["ctrl+alt+m"]
 }
 ```
 
-You can also use an array:
+Multiple shortcuts work too:
 
 ```json
 {
-  "pi-gpt-fastmode": ["ctrl+m", "ctrl+alt+m"]
+  "pi-gpt-fast-mode": ["ctrl+alt+m", "ctrl+shift+m"]
 }
 ```
 
-Set it to `false` or `null` to disable the shortcut.
+Set it to an empty array to disable the shortcut:
+
+```json
+{
+  "pi-gpt-fast-mode": []
+}
+```
+
+`ctrl+m`, `enter`, and `return` are ignored because many terminals encode Enter as `ctrl+m`.
 
 The extension looks for that file in this order:
 

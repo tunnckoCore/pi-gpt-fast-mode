@@ -6,6 +6,7 @@ import fastModeExtension, {
   DEFAULT_SHORTCUT,
   FAST_SERVICE_TIER,
   KEYBINDING_FIELD,
+  RESERVED_SHORTCUTS,
   TARGET_MODEL,
   TARGET_PROVIDER,
   loadShortcuts,
@@ -81,8 +82,14 @@ test("patches only GPT-5.5 Codex payloads", () => {
 
 test("normalizes shortcut settings", () => {
   expect(normalizeShortcutSetting(undefined)).toEqual([DEFAULT_SHORTCUT]);
+  expect(normalizeShortcutSetting([DEFAULT_SHORTCUT])).toEqual([DEFAULT_SHORTCUT]);
   expect(normalizeShortcutSetting(` ${DEFAULT_SHORTCUT} `)).toEqual([DEFAULT_SHORTCUT]);
-  expect(normalizeShortcutSetting(["ctrl+m", "", "ctrl+alt+m"])).toEqual(["ctrl+m", "ctrl+alt+m"]);
+  expect(RESERVED_SHORTCUTS.has("ctrl+m")).toBe(true);
+  expect(normalizeShortcutSetting(["ctrl+m", "", "ctrl+alt+m"])).toEqual(["ctrl+alt+m"]);
+  expect(normalizeShortcutSetting(["ctrl+m"])).toEqual([]);
+  expect(normalizeShortcutSetting([])).toEqual([]);
+  expect(normalizeShortcutSetting("ctrl+m")).toEqual([DEFAULT_SHORTCUT]);
+  expect(normalizeShortcutSetting("enter")).toEqual([DEFAULT_SHORTCUT]);
   expect(normalizeShortcutSetting(false)).toEqual([]);
   expect(normalizeShortcutSetting(null)).toEqual([]);
 });
@@ -106,7 +113,7 @@ test("resolves Pi keybindings path from env, XDG, then default", () => {
 });
 
 test("loads configured shortcuts and toggles payload patching", async () => {
-  const tempDir = mkdtempSync(join(tmpdir(), "pi-gpt-fastmode-"));
+  const tempDir = mkdtempSync(join(tmpdir(), "pi-gpt-fast-mode-"));
 
   try {
     const envDir = join(tempDir, "agent");

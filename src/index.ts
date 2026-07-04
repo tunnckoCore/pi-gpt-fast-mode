@@ -6,8 +6,9 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 export const TARGET_PROVIDER = "openai-codex";
 export const TARGET_MODEL = "gpt-5.5";
 export const FAST_SERVICE_TIER = "priority";
-export const KEYBINDING_FIELD = "pi-gpt-fastmode";
+export const KEYBINDING_FIELD = "pi-gpt-fast-mode";
 export const DEFAULT_SHORTCUT = "ctrl+alt+m";
+export const RESERVED_SHORTCUTS = new Set(["ctrl+m", "enter", "return"]);
 
 type PiModel = { provider?: string; id?: string };
 type ProviderPayload = Record<string, unknown>;
@@ -78,21 +79,25 @@ export function resolveKeybindingsPath(options: ShortcutLoadOptions = {}): strin
   return join(home, ".pi", "agent", "keybindings.json");
 }
 
-export function normalizeShortcutSetting(value: unknown): string[] {
-  if (value === false || value === null) return [];
-
-  const values = Array.isArray(value) ? value : [value];
-  const shortcuts = values
+function normalizeShortcutList(values: unknown[]): string[] {
+  return values
     .filter((item): item is string => typeof item === "string")
     .map((item) => item.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter((shortcut) => !RESERVED_SHORTCUTS.has(shortcut.toLowerCase()));
+}
 
+export function normalizeShortcutSetting(value: unknown): string[] {
+  if (value === false || value === null) return [];
+  if (Array.isArray(value)) return normalizeShortcutList(value);
+
+  const shortcuts = normalizeShortcutList([value]);
   return shortcuts.length > 0 ? shortcuts : [DEFAULT_SHORTCUT];
 }
 
 /**
  * Read shortcuts from the global Pi keybindings JSON.
- * Uses the field `pi-gpt-fastmode`. Missing or invalid config falls back to ctrl+alt+m.
+ * Uses the field `pi-gpt-fast-mode`. Missing or invalid config falls back to ctrl+alt+m.
  * Set the field to false or null to disable the shortcut entirely.
  */
 export function loadShortcuts(options: ShortcutLoadOptions = {}): string[] {

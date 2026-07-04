@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "pi-gpt-fastmode",
+      "name": "@tunnckocore/pi-gpt-fast-mode",
       "devDependencies": {
         "@earendil-works/pi-coding-agent": "^0.80.3",
         "@types/bun": "latest",
