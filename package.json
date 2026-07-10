@@ -1,7 +1,7 @@
 {
   "name": "@tunnckocore/pi-gpt-fast-mode",
-  "version": "0.3.0",
-  "description": "A super basic Pi extension that toggles GPT-5.4 / GPT-5.5 Fast mode with /fast (the default 'priority'), nothing else - one file.",
+  "version": "0.4.0",
+  "description": "A super basic Pi extension that toggles GPT-5.4 / GPT-5.5 / GPT-5.6 Fast mode with /fast (the default 'priority'), nothing else - one file.",
   "type": "module",
   "module": "src/index.ts",
   "license": "MIT",
@@ -14,6 +14,7 @@
     "pi-extension",
     "gpt-5.4",
     "gpt-5.5",
+    "gpt-5.6",
     "codex",
     "fast-mode"
   ],

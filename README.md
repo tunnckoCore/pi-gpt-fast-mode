@@ -1,6 +1,6 @@
 # @tunnckocore/pi-gpt-fast-mode
 
-Fast mode for supported GPT-5.4 / GPT-5.5 models in Pi - one file, easy to review. No ceremony.
+Fast mode for supported GPT-5.4 / GPT-5.5 / GPT-5.6 models in Pi - one file, easy to review. No ceremony.
 
 This package adds one command:
 
@@ -31,9 +31,17 @@ It only applies when the active model is one of:
 openai/gpt-5.4
 openai/gpt-5.4-mini
 openai/gpt-5.5
+openai/gpt-5.6
+openai/gpt-5.6-sol
+openai/gpt-5.6-terra
+openai/gpt-5.6-luna
 openai-codex/gpt-5.4
 openai-codex/gpt-5.4-mini
 openai-codex/gpt-5.5
+openai-codex/gpt-5.6
+openai-codex/gpt-5.6-sol
+openai-codex/gpt-5.6-terra
+openai-codex/gpt-5.6-luna
 ```
 
 Other models are left alone. No weird surprise bill multiplier on a random provider.
@@ -161,7 +169,7 @@ The test mocks the Pi extension API and checks the only things worth checking he
 - default is off
 - `/fast` turns it on
 - `/fast` turns it off
-- only supported GPT-5.4 / GPT-5.5 models get patched
+- only supported GPT-5.4 / GPT-5.5 / GPT-5.6 models get patched
 - keybinding config is loaded
 
 No fake testing theater. Just enough net under the wire.

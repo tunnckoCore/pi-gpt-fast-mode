@@ -8,6 +8,7 @@ import fastModeExtension, {
   FAST_SERVICE_TIER,
   KEYBINDING_FIELD,
   RESERVED_SHORTCUTS,
+  SUPPORTED_MODELS,
   TARGET_MODEL,
   TARGET_PROVIDER,
   loadDefaultEnabled,
@@ -74,15 +75,14 @@ afterEach(() => {
 });
 
 test("patches only supported GPT payloads", () => {
-  expect(shouldApplyFastMode({ provider: TARGET_PROVIDER, id: TARGET_MODEL }, { model: TARGET_MODEL })).toBe(true);
-  expect(shouldApplyFastMode({ provider: "openai", id: TARGET_MODEL }, { model: TARGET_MODEL })).toBe(true);
-  expect(shouldApplyFastMode({ provider: TARGET_PROVIDER, id: "gpt-5.4" }, { model: "gpt-5.4" })).toBe(true);
-  expect(shouldApplyFastMode({ provider: TARGET_PROVIDER, id: "gpt-5.4-mini" }, { model: "gpt-5.4-mini" })).toBe(
-    true,
-  );
-  expect(shouldApplyFastMode({ provider: "openai", id: "gpt-5.4-mini" }, { model: "gpt-5.4-mini" })).toBe(true);
+  for (const key of SUPPORTED_MODELS) {
+    const [provider, id] = key.split("/");
+    expect(shouldApplyFastMode({ provider, id }, { model: id })).toBe(true);
+  }
+
   expect(shouldApplyFastMode({ provider: "openai", id: "gpt-5.4-nano" }, { model: "gpt-5.4-nano" })).toBe(false);
-  expect(shouldApplyFastMode({ provider: TARGET_PROVIDER, id: "gpt-5.4" }, { model: TARGET_MODEL })).toBe(false);
+  expect(shouldApplyFastMode({ provider: "openai", id: "gpt-5.6-mars" }, { model: "gpt-5.6-mars" })).toBe(false);
+  expect(shouldApplyFastMode({ provider: TARGET_PROVIDER, id: "gpt-5.6-sol" }, { model: TARGET_MODEL })).toBe(false);
   expect(withFastServiceTier({ model: TARGET_MODEL, input: [] })).toEqual({
     model: TARGET_MODEL,
     input: [],
