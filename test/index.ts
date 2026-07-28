@@ -6,8 +6,10 @@ import fastModeExtension, {
   CONFIG_FIELD,
   DEFAULT_SHORTCUT,
   FAST_SERVICE_TIER,
+  FAST_STATUS,
   KEYBINDING_FIELD,
   RESERVED_SHORTCUTS,
+  STATUS_ID,
   SUPPORTED_MODELS,
   TARGET_MODEL,
   TARGET_PROVIDER,
@@ -46,13 +48,18 @@ function createMockPi() {
 
 function createCtx(model = { provider: TARGET_PROVIDER, id: TARGET_MODEL }) {
   const notifications: Array<{ message: string; level: string }> = [];
+  const statuses: Array<{ id: string; value?: string }> = [];
 
   return {
     model,
     notifications,
+    statuses,
     ui: {
       notify(message: string, level = "info") {
         notifications.push({ message, level });
+      },
+      setStatus(id: string, value?: string) {
+        statuses.push({ id, value });
       },
     },
   };
@@ -125,6 +132,10 @@ test("resolves Pi config file paths from env, XDG, then default", () => {
   );
 });
 
+test("uses a bold vivid-green status with scoped resets", () => {
+  expect(FAST_STATUS).toBe("\u001b[1m\u001b[38;2;0;255;135mFAST\u001b[39m\u001b[22m");
+});
+
 test("loads configured shortcuts and toggles payload patching", async () => {
   const tempDir = mkdtempSync(join(tmpdir(), "pi-gpt-fast-mode-"));
 
@@ -154,11 +165,17 @@ test("loads configured shortcuts and toggles payload patching", async () => {
     expect(pi.shortcuts.has("ctrl+alt+m")).toBe(true);
     expect(pi.handlers.has("before_provider_request")).toBe(true);
     expect(pi.handlers.has("session_start")).toBe(true);
+    expect(pi.handlers.has("model_select")).toBe(true);
+    expect(pi.handlers.has("session_shutdown")).toBe(true);
 
     const ctx = createCtx();
     const payloadHook = pi.handlers.get("before_provider_request")!;
     const sessionStart = pi.handlers.get("session_start")!;
+    const modelSelect = pi.handlers.get("model_select")!;
+    const sessionShutdown = pi.handlers.get("session_shutdown")!;
 
+    sessionStart({}, ctx);
+    expect(ctx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: FAST_STATUS });
     expect(payloadHook({ payload: { model: TARGET_MODEL, store: false } }, ctx)).toEqual({
       model: TARGET_MODEL,
       store: false,
@@ -167,9 +184,11 @@ test("loads configured shortcuts and toggles payload patching", async () => {
 
     await pi.commands.get("fast")!.handler("", ctx);
     expect(ctx.notifications.at(-1)?.message).toMatch(/disabled/);
+    expect(ctx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: undefined });
     expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeUndefined();
 
     sessionStart({}, ctx);
+    expect(ctx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: FAST_STATUS });
     expect(payloadHook({ payload: { model: TARGET_MODEL, store: false } }, ctx)).toEqual({
       model: TARGET_MODEL,
       store: false,
@@ -178,9 +197,19 @@ test("loads configured shortcuts and toggles payload patching", async () => {
 
     await pi.commands.get("fast")!.handler("", ctx);
     expect(ctx.notifications.at(-1)?.message).toMatch(/disabled/);
+    expect(ctx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: undefined });
 
     await pi.commands.get("fast")!.handler("", ctx);
     expect(ctx.notifications.at(-1)?.message).toMatch(/enabled/);
+    expect(ctx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: FAST_STATUS });
+
+    ctx.model = { provider: "anthropic", id: "claude-opus-4-8" };
+    modelSelect({}, ctx);
+    expect(ctx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: undefined });
+    ctx.model = { provider: TARGET_PROVIDER, id: TARGET_MODEL };
+    modelSelect({}, ctx);
+    expect(ctx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: FAST_STATUS });
+
     expect(payloadHook({ payload: { model: TARGET_MODEL, store: false } }, ctx)).toEqual({
       model: TARGET_MODEL,
       store: false,
@@ -188,10 +217,18 @@ test("loads configured shortcuts and toggles payload patching", async () => {
     });
 
     await pi.commands.get("fast")!.handler("", ctx);
+    expect(ctx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: undefined });
+
     const unsupportedCtx = createCtx({ provider: "anthropic", id: "claude-opus-4-8" });
     await pi.shortcuts.get("ctrl+alt+m")!.handler(unsupportedCtx);
+    expect(unsupportedCtx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: undefined });
     expect(payloadHook({ payload: { model: "claude-opus-4-8" } }, unsupportedCtx)).toBeUndefined();
     expect(unsupportedCtx.notifications.at(-1)?.level).toBe("warning");
+
+    modelSelect({}, ctx);
+    expect(ctx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: FAST_STATUS });
+    sessionShutdown({}, ctx);
+    expect(ctx.statuses.at(-1)).toEqual({ id: STATUS_ID, value: undefined });
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
