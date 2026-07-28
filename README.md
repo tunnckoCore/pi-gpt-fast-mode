@@ -86,6 +86,32 @@ Toggle it off the same way:
 /fast
 ```
 
+## Status indicator
+
+When Fast mode is enabled for the active supported model, Pi's footer shows a bold, vivid-green indicator:
+
+```text
+FAST
+```
+
+The indicator is hidden when Fast mode is disabled or the active model is unsupported. It follows model changes and is cleared when the session shuts down.
+
+### Zentui integration
+
+[pi-zentui](https://github.com/lmilojevicc/pi-zentui) styles third-party statuses itself by default. To preserve this extension's green indicator, add the following to `~/.pi/agent/zentui.json`:
+
+```json
+{
+  "extensionStatuses": {
+    "colorModes": {
+      "fast-mode": "original"
+    }
+  }
+}
+```
+
+Then run `/reload`. Placement can be changed through Zentui's **Extension segments** settings.
+
 ## Default state
 
 Fast mode starts off by default.
@@ -169,6 +195,8 @@ The test mocks the Pi extension API and checks the only things worth checking he
 - default is off
 - `/fast` turns it on
 - `/fast` turns it off
+- the colored status appears only when Fast mode applies to the active model
+- model changes and session shutdown keep the status accurate
 - only supported GPT-5.4 / GPT-5.5 / GPT-5.6 models get patched
 - keybinding config is loaded
 

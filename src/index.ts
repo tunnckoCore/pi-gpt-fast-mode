@@ -26,11 +26,15 @@ export const CONFIG_FIELD = "pi-gpt-fast-mode";
 export const KEYBINDING_FIELD = CONFIG_FIELD;
 export const DEFAULT_SHORTCUT = "ctrl+alt+m";
 export const RESERVED_SHORTCUTS = new Set(["ctrl+m", "enter", "return"]);
+export const STATUS_ID = "fast-mode";
+// Use a vivid green so the active service tier remains obvious in muted themes.
+export const FAST_STATUS = "\u001b[1m\u001b[38;2;0;255;135mFAST\u001b[39m\u001b[22m";
 
 type PiModel = { provider?: string; id?: string };
 type ProviderPayload = Record<string, unknown>;
 type PiConfig = Record<string, unknown>;
 type ReadTextFile = (path: string, encoding: "utf8") => string;
+type StatusUi = { setStatus?: (id: string, value?: string) => void };
 
 type PiFileLoadOptions = {
   env?: Record<string, string | undefined>;
@@ -168,6 +172,15 @@ function currentModelLabel(ctx: unknown): string {
   return model?.provider && model.id ? modelKey(model) : "unknown model";
 }
 
+function getStatusUi(ctx: unknown): StatusUi | undefined {
+  return (ctx as { ui?: StatusUi } | undefined)?.ui;
+}
+
+function syncStatus(ctx: unknown, enabled: boolean): void {
+  const value = enabled && isSupportedModelContext(ctx) ? FAST_STATUS : undefined;
+  getStatusUi(ctx)?.setStatus?.(STATUS_ID, value);
+}
+
 function notify(ctx: unknown, message: string, level: "info" | "warning" | "error" = "info"): void {
   const ui = (ctx as { ui?: { notify?: (message: string, level?: string) => void } } | undefined)?.ui;
   ui?.notify?.(message, level);
@@ -192,6 +205,7 @@ export default function fastModeExtension(pi: ExtensionAPI): void {
 
   async function toggle(ctx: unknown): Promise<void> {
     enabled = !enabled;
+    syncStatus(ctx, enabled);
     announceState(ctx, enabled);
   }
 
@@ -211,8 +225,17 @@ export default function fastModeExtension(pi: ExtensionAPI): void {
     });
   }
 
-  pi.on("session_start", () => {
+  pi.on("session_start", (_event, ctx) => {
     enabled = loadDefaultEnabled();
+    syncStatus(ctx, enabled);
+  });
+
+  pi.on("model_select", (_event, ctx) => {
+    syncStatus(ctx, enabled);
+  });
+
+  pi.on("session_shutdown", (_event, ctx) => {
+    getStatusUi(ctx)?.setStatus?.(STATUS_ID, undefined);
   });
 
   pi.on("before_provider_request", (event, ctx) => {
