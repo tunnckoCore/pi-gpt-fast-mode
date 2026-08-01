@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import fastModeExtension, {
@@ -123,6 +123,126 @@ test("resolves Pi config file paths from env, XDG, then default", () => {
   expect(resolveSettingsPath({ env: {}, home: "/home/test", exists: () => false })).toBe(
     "/home/test/.pi/agent/settings.json",
   );
+});
+
+test("supports explicit commands and future-session defaults", async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), "pi-gpt-fast-mode-"));
+
+  try {
+    const envDir = join(tempDir, "agent");
+    const settingsPath = join(envDir, "settings.json");
+    mkdirSync(envDir, { recursive: true });
+    writeFileSync(settingsPath, JSON.stringify({ [CONFIG_FIELD]: { enabled: false } }), "utf8");
+    process.env.PI_CODING_AGENT_DIR = envDir;
+    delete process.env.XDG_CONFIG_HOME;
+
+    const pi = createMockPi();
+    fastModeExtension(pi as unknown as Parameters<typeof fastModeExtension>[0]);
+    const command = pi.commands.get("fast")!;
+    const payloadHook = pi.handlers.get("before_provider_request")!;
+    const sessionStart = pi.handlers.get("session_start")!;
+    const ctx = createCtx();
+
+    await command.handler(" ON ", ctx);
+    expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toEqual({
+      model: TARGET_MODEL,
+      service_tier: FAST_SERVICE_TIER,
+    });
+    await command.handler("on", ctx);
+    expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeDefined();
+
+    await command.handler(" off ", ctx);
+    expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeUndefined();
+    await command.handler("OFF", ctx);
+    expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeUndefined();
+
+    const beforeStatus = readFileSync(settingsPath, "utf8");
+    await command.handler("status", ctx);
+    expect(ctx.notifications.at(-1)?.message).toMatch(/current: disabled; default: disabled/i);
+    expect(readFileSync(settingsPath, "utf8")).toBe(beforeStatus);
+
+    for (const args of ["default", "on extra", "default on extra"]) {
+      await command.handler(args, ctx);
+      expect(ctx.notifications.at(-1)?.level).toBe("warning");
+      expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeUndefined();
+      expect(readFileSync(settingsPath, "utf8")).toBe(beforeStatus);
+    }
+
+    await command.handler(" DeFaUlT   On ", ctx);
+    expect(loadDefaultEnabled()).toBe(true);
+    expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeUndefined();
+    await command.handler("status", ctx);
+    expect(ctx.notifications.at(-1)?.message).toMatch(/current: disabled; default: enabled/i);
+
+    sessionStart({}, ctx);
+    expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeDefined();
+    await command.handler("default off", ctx);
+    expect(loadDefaultEnabled()).toBe(false);
+    expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeDefined();
+
+    sessionStart({}, ctx);
+    expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeUndefined();
+    await command.handler(" \t\n ", ctx);
+    expect(payloadHook({ payload: { model: TARGET_MODEL } }, ctx)).toBeDefined();
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("writes defaults without clobbering settings", async () => {
+  const tempDir = mkdtempSync(join(tmpdir(), "pi-gpt-fast-mode-"));
+
+  try {
+    const envDir = join(tempDir, "agent");
+    const settingsPath = join(envDir, "settings.json");
+    mkdirSync(envDir, { recursive: true });
+    writeFileSync(
+      settingsPath,
+      JSON.stringify({ theme: "dark", [CONFIG_FIELD]: { enabled: false, note: "keep" } }),
+      "utf8",
+    );
+    process.env.PI_CODING_AGENT_DIR = envDir;
+    delete process.env.XDG_CONFIG_HOME;
+
+    const pi = createMockPi();
+    fastModeExtension(pi as unknown as Parameters<typeof fastModeExtension>[0]);
+    const command = pi.commands.get("fast")!;
+    const ctx = createCtx();
+
+    await command.handler("default on", ctx);
+    expect(JSON.parse(readFileSync(settingsPath, "utf8"))).toEqual({
+      theme: "dark",
+      [CONFIG_FIELD]: { enabled: true, note: "keep" },
+    });
+
+    writeFileSync(settingsPath, JSON.stringify({ theme: "dark", [CONFIG_FIELD]: "legacy" }), "utf8");
+    await command.handler("default off", ctx);
+    expect(JSON.parse(readFileSync(settingsPath, "utf8"))).toEqual({
+      theme: "dark",
+      [CONFIG_FIELD]: { enabled: false },
+    });
+
+    for (const raw of ["{", "[]", "null"]) {
+      writeFileSync(settingsPath, raw, "utf8");
+      await command.handler("default on", ctx);
+      expect(readFileSync(settingsPath, "utf8")).toBe(raw);
+      expect(ctx.notifications.at(-1)?.level).toBe("error");
+    }
+
+    const missingDir = join(tempDir, "missing", "agent");
+    process.env.PI_CODING_AGENT_DIR = missingDir;
+    await command.handler("default on", ctx);
+    expect(existsSync(join(missingDir, "settings.json"))).toBe(true);
+    expect(loadDefaultEnabled()).toBe(true);
+
+    const blockedParent = join(tempDir, "blocked");
+    writeFileSync(blockedParent, "not a directory", "utf8");
+    process.env.PI_CODING_AGENT_DIR = join(blockedParent, "agent");
+    await command.handler("default off", ctx);
+    expect(ctx.notifications.at(-1)?.level).toBe("error");
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
 });
 
 test("loads configured shortcuts and toggles payload patching", async () => {

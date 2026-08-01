@@ -77,20 +77,21 @@ pi install npm:@tunnckocore/pi-gpt-fast-mode
 Inside Pi:
 
 ```text
-/fast
+/fast              # toggle the current session
+/fast on           # enable the current session
+/fast off          # disable the current session
+/fast status       # show current and default states
+/fast default on   # enable future sessions by default
+/fast default off  # disable future sessions by default
 ```
 
-Toggle it off the same way:
-
-```text
-/fast
-```
+Arguments are case-insensitive and extra whitespace is ignored. Invalid forms warn without changing anything.
 
 ## Default state
 
-Fast mode starts off by default.
+Fast mode starts off by default. `/fast default on` and `/fast default off` update future sessions only; use `/fast on` or `/fast off` for the current session.
 
-To start every session with Fast mode on, add this to Pi's global settings file:
+The default commands update the same global settings field you can configure manually:
 
 ```json
 {
@@ -100,7 +101,7 @@ To start every session with Fast mode on, add this to Pi's global settings file:
 }
 ```
 
-Set `enabled` to `false` or remove the block to start disabled again. The `/fast` command still toggles either way.
+Unrelated strict-JSON settings are preserved. Malformed or non-object settings files are left unchanged and reported as errors.
 
 The extension looks for that file in this order:
 
@@ -166,9 +167,8 @@ bun run test
 
 The test mocks the Pi extension API and checks the only things worth checking here:
 
-- default is off
-- `/fast` turns it on
-- `/fast` turns it off
+- current-session commands and status work
+- defaults are persisted for future sessions without clobbering other settings
 - only supported GPT-5.4 / GPT-5.5 / GPT-5.6 models get patched
 - keybinding config is loaded
 
