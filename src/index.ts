@@ -1,6 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 export const SUPPORTED_MODELS = new Set([
@@ -134,6 +134,58 @@ function readPiJson(path: string, readFile: ReadTextFile): PiConfig | undefined 
   }
 }
 
+function writeDefaultEnabled(enabled: boolean): string | undefined {
+  const settingsPath = resolveSettingsPath();
+  let settings: PiConfig = {};
+
+  try {
+    const parsed = JSON.parse(readFileSync(settingsPath, "utf8")) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return `Settings file ${settingsPath} must contain a JSON object.`;
+    }
+    settings = parsed as PiConfig;
+  } catch (error) {
+    if ((error as { code?: string }).code !== "ENOENT") {
+      return `Unable to read ${settingsPath}: ${error instanceof Error ? error.message : String(error)}`;
+    }
+  }
+
+  const extensionConfig = settings[CONFIG_FIELD];
+  const nextSettings = {
+    ...settings,
+    [CONFIG_FIELD]: extensionConfig && typeof extensionConfig === "object" && !Array.isArray(extensionConfig)
+      ? { ...(extensionConfig as PiConfig), enabled }
+      : { enabled },
+  };
+  const tempPath = `${settingsPath}.${process.pid}.${Date.now()}.tmp`;
+  let tempFd: number | undefined;
+  let tempCreated = false;
+
+  try {
+    mkdirSync(dirname(settingsPath), { recursive: true });
+    tempFd = openSync(tempPath, "wx", 0o600);
+    tempCreated = true;
+    writeFileSync(tempFd, `${JSON.stringify(nextSettings, null, 2)}\n`, "utf8");
+    closeSync(tempFd);
+    tempFd = undefined;
+    renameSync(tempPath, settingsPath);
+    tempCreated = false;
+    return undefined;
+  } catch (error) {
+    if (tempFd !== undefined) {
+      try {
+        closeSync(tempFd);
+      } catch {}
+    }
+    if (tempCreated) {
+      try {
+        unlinkSync(tempPath);
+      } catch {}
+    }
+    return `Unable to save ${settingsPath}: ${error instanceof Error ? error.message : String(error)}`;
+  }
+}
+
 /**
  * Read shortcuts from the global Pi keybindings JSON.
  * Uses the field `pi-gpt-fast-mode`. Missing or invalid config falls back to ctrl+alt+m.
@@ -187,6 +239,8 @@ function announceState(ctx: unknown, enabled: boolean): void {
   notify(ctx, `GPT Fast mode enabled, but ${currentModelLabel(ctx)} is not supported.`, "warning");
 }
 
+const FAST_USAGE = "Usage: /fast [on|off|status|default on|default off]";
+
 export default function fastModeExtension(pi: ExtensionAPI): void {
   let enabled = loadDefaultEnabled();
 
@@ -195,10 +249,31 @@ export default function fastModeExtension(pi: ExtensionAPI): void {
     announceState(ctx, enabled);
   }
 
+  function setEnabled(value: boolean, ctx: unknown): void {
+    enabled = value;
+    announceState(ctx, enabled);
+  }
+
+  function setDefault(value: boolean, ctx: unknown): void {
+    const error = writeDefaultEnabled(value);
+    if (error) return notify(ctx, error, "error");
+    notify(ctx, `GPT Fast mode default ${value ? "enabled" : "disabled"} for future sessions.`);
+  }
+
   pi.registerCommand("fast", {
-    description: "Toggle GPT Fast mode (service_tier: priority)",
-    handler: async (_args, ctx) => {
-      await toggle(ctx);
+    description: "Control GPT Fast mode (service_tier: priority)",
+    handler: async (args, ctx) => {
+      switch (args.trim().toLowerCase().replace(/\s+/g, " ")) {
+        case "": return toggle(ctx);
+        case "on": return setEnabled(true, ctx);
+        case "off": return setEnabled(false, ctx);
+        case "status":
+          notify(ctx, `GPT Fast mode status: current: ${enabled ? "enabled" : "disabled"}; default: ${loadDefaultEnabled() ? "enabled" : "disabled"}.`);
+          return;
+        case "default on": return setDefault(true, ctx);
+        case "default off": return setDefault(false, ctx);
+        default: return notify(ctx, FAST_USAGE, "warning");
+      }
     },
   });
 
