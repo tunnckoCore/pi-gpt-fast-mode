@@ -82,6 +82,7 @@ test("patches only supported GPT payloads", () => {
 
   expect(shouldApplyFastMode({ provider: "openai", id: "gpt-5.4-nano" }, { model: "gpt-5.4-nano" })).toBe(false);
   expect(shouldApplyFastMode({ provider: "openai", id: "gpt-5.6-mars" }, { model: "gpt-5.6-mars" })).toBe(false);
+  expect(shouldApplyFastMode({ provider: "openai", id: "gpt-6-astra-pro" }, { model: "gpt-6-astra-pro" })).toBe(false);
   expect(shouldApplyFastMode({ provider: TARGET_PROVIDER, id: "gpt-5.6-sol" }, { model: TARGET_MODEL })).toBe(false);
   expect(withFastServiceTier({ model: TARGET_MODEL, input: [] })).toEqual({
     model: TARGET_MODEL,
