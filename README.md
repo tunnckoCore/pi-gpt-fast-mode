@@ -35,6 +35,7 @@ openai/gpt-5.6
 openai/gpt-5.6-sol
 openai/gpt-5.6-terra
 openai/gpt-5.6-luna
+openai/gpt-6-astra
 openai-codex/gpt-5.4
 openai-codex/gpt-5.4-mini
 openai-codex/gpt-5.5
@@ -42,6 +43,7 @@ openai-codex/gpt-5.6
 openai-codex/gpt-5.6-sol
 openai-codex/gpt-5.6-terra
 openai-codex/gpt-5.6-luna
+openai-codex/gpt-6-astra
 ```
 
 Other models are left alone. No weird surprise bill multiplier on a random provider.
